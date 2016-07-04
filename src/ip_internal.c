@@ -43,6 +43,12 @@
 #include <net/if.h>
 
 #define LOCALHOST "127."
+#define LOCALHOST_LEN 4
+
+#define SETRET(ip,addr) \
+  PROTECT(ip = allocVector(STRSXP, 1)); \
+  SET_STRING_ELT(ip, 0, mkChar(addr)); \
+  UNPROTECT(1);
 
 // FIXME this SHOULD be in net/if.h, but doesn't get included for some insane reason
 #ifndef IFF_LOOPBACK
@@ -53,37 +59,38 @@
 SEXP ip_internal_nix()
 {
   SEXP ip;
-  struct ifaddrs *tmp, *ifap;
+  struct ifaddrs *ifaddrs_p, *start;
   struct sockaddr_in *pAddr;
   char *addr;
   
-  getifaddrs(&ifap);
-  tmp = ifap;
+  getifaddrs(&start);
+  // keep track of the start so we can free it properly later
+  ifaddrs_p = start;
   
-  while (tmp)
+  while (ifaddrs_p)
   {
-    if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
+    if (ifaddrs_p->ifa_addr && ifaddrs_p->ifa_addr->sa_family == AF_INET)
     {
-      pAddr = (struct sockaddr_in *) tmp->ifa_addr;
+      pAddr = (struct sockaddr_in *) ifaddrs_p->ifa_addr;
       
       addr = inet_ntoa(pAddr->sin_addr);
       
-      if (strcmp(tmp->ifa_name, "lo") != 0  && 
-          strcmp(addr, LOCALHOST)     != 0  && 
-          !(tmp->ifa_flags & IFF_LOOPBACK)  )
+      if (strncmp(ifaddrs_p->ifa_name, "lo", 2)   != 0  && 
+          strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
+          !(ifaddrs_p->ifa_flags & IFF_LOOPBACK) )
       {
-        PROTECT(ip = allocVector(STRSXP, 1));
-        SET_STRING_ELT(ip, 0, mkChar(addr));
-        free(ifap);
-        UNPROTECT(1);
+        SETRET(ip, addr);
+        freeifaddrs(start);
+        
         return ip;
       }
     }
     
-    tmp = tmp->ifa_next;
+    ifaddrs_p = ifaddrs_p->ifa_next;
   }
   
-  freeifaddrs(ifap);
+  freeifaddrs(start);
+  error("Could not determine local IP");
   
   return R_NilValue;
 }
@@ -91,7 +98,6 @@ SEXP ip_internal_nix()
 
 
 #if OS_WINDOWS
-// TODO
 SEXP ip_internal_win()
 {
   return R_NilValue;
