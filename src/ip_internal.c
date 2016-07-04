@@ -33,14 +33,7 @@
 
 #include "platform.h"
 
-#if !OS_WINDOWS
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
+#define ERRMSG "Could not determine local IP"
 
 #define LOCALHOST "127."
 #define LOCALHOST_LEN 4
@@ -49,6 +42,18 @@
   PROTECT(ip = allocVector(STRSXP, 1)); \
   SET_STRING_ELT(ip, 0, mkChar(addr)); \
   UNPROTECT(1);
+
+
+
+
+#if !OS_WINDOWS
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 // FIXME this SHOULD be in net/if.h, but doesn't get included for some insane reason
 #ifndef IFF_LOOPBACK
@@ -90,7 +95,7 @@ SEXP ip_internal_nix()
   }
   
   freeifaddrs(start);
-  error("Could not determine local IP");
+  error(ERRMSG);
   
   return R_NilValue;
 }
@@ -98,8 +103,76 @@ SEXP ip_internal_nix()
 
 
 #if OS_WINDOWS
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+
+// with much help from https://msdn.microsoft.com/en-us/library/aa365949(VS.85).aspx
 SEXP ip_internal_win()
 {
+  SEXP ip;
+  int i;
+  char *addr;
+  
+  PMIB_IPADDRTABLE pIPAddrTable;
+  DWORD dwSize = 0;
+  DWORD dwRetVal = 0;
+  IN_ADDR IPAddr;
+  
+  LPVOID lpMsgBuf;
+  
+  pIPAddrTable = (MIB_IPADDRTABLE *) malloc(sizeof (MIB_IPADDRTABLE));
+
+  // Allocate workspace
+  if (pIPAddrTable)
+  {
+    if (GetIpAddrTable(pIPAddrTable, &dwSize, 0) == ERROR_INSUFFICIENT_BUFFER)
+    {
+      free(pIPAddrTable);
+      pIPAddrTable = (MIB_IPADDRTABLE *) malloc(dwSize);
+    }
+    if (pIPAddrTable == NULL)
+      error("Memory allocation failed\n");
+  }
+  
+  // Get the data
+  if ( (dwRetVal = GetIpAddrTable(pIPAddrTable, &dwSize, 0)) != NO_ERROR )
+  { 
+    REprintf("GetIpAddrTable failed with error %d\n", dwRetVal);
+    if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
+                      NULL, dwRetVal, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) & lpMsgBuf, 0, NULL) )
+    {
+        REprintf("\tError: %s", lpMsgBuf);
+        LocalFree(lpMsgBuf);
+        error(""); //FIXME
+    }
+  }
+  
+  const int nentries = (int) pIPAddrTable->dwNumEntries;
+  for (i=0; i<nentries; i++)
+  {
+    IPAddr.S_un.S_addr = (u_long) pIPAddrTable->table[i].dwAddr;
+    addr = inet_ntoa(IPAddr);
+    
+    const BOOL is_primary = pIPAddrTable->table[i].wType & MIB_IPADDR_PRIMARY;
+    if (strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0 && is_primary)
+    {
+      SETRET(ip, addr);
+      if (pIPAddrTable)
+        free(pIPAddrTable);
+      
+      return ip;
+    }
+  }
+  
+  if (pIPAddrTable)
+  {
+    free(pIPAddrTable);
+    pIPAddrTable = NULL;
+  }
+  
+  error(ERRMSG);
+  
   return R_NilValue;
 }
 #endif
@@ -110,7 +183,7 @@ SEXP C_ip_internal()
 {
   SEXP ret;
   #if OS_WINDOWS
-  ret = pbdcs_getip_win();
+  ret = ip_internal_win();
   #else
   ret = ip_internal_nix();
   #endif
