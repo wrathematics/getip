@@ -1,0 +1,2 @@
+PKG_CPPFLAGS = -DWIN
+PKG_LIBS = -lIphlpapi -lws2_32
