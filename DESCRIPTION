@@ -10,7 +10,6 @@ Depends:
 NeedsCompilation: yes
 ByteCompile: yes
 Authors@R: c(person("Drew", "Schmidt", role=c("aut", "cre"),
-    email="wrathematics@gmail.com"),
-    person("Microsoft", role="ctb", comment="Some MS-specific code modified from MSDN example"))
+    email="wrathematics@gmail.com"))
 Maintainer: Drew Schmidt <wrathematics@gmail.com>
 RoxygenNote: 5.0.1
