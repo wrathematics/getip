@@ -1,8 +1,8 @@
 # getip 
 
 * **Version:** 0.1-0
-* **Status:** [![Build Status](https://travis-ci.org/wrathematics/getip.png)](https://travis-ci.org/wrathematics/getip)
 * **URL**: https://github.com/wrathematics/getip
+* **Status:** [![Build Status](https://travis-ci.org/wrathematics/getip.png)](https://travis-ci.org/wrathematics/getip)
 * **License:** [![License](http://img.shields.io/badge/license-BSD%202--Clause-orange.svg?style=flat)](http://opensource.org/licenses/BSD-2-Clause)
 * **Author:** Drew Schmidt
 
