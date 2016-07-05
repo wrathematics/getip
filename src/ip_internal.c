@@ -152,10 +152,9 @@ SEXP ip_internal_win()
     }
   }
   
-  if (pIPAddrTable)
-    free(pIPAddrTable);
-  
+  free(pIPAddrTable);
   error(ERRMSG);
+  
   return R_NilValue;
 }
 #endif
