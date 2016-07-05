@@ -132,7 +132,7 @@ SEXP ip_internal_win()
   }
   
   check = GetIpAddrTable(pIPAddrTable, &pdwSize, 0);
-  if (check != NO_ERROR )
+  if (check != NO_ERROR)
     error("GetIpAddrTable returned error number %d\n", check);
   
   const int num_entries = pIPAddrTable->dwNumEntries;
