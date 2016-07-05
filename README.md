@@ -33,7 +33,7 @@ To get your local (internal) IP address:
 getip::ip_internal()
 ```
 
-To get your external IP address:
+To get your public (external) IP address:
 
 ```r
 getip::ip_external()
