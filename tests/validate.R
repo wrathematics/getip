@@ -4,7 +4,7 @@ val <- getip:::validate_ipv4
 test <- "127.0.0.1"
 stopifnot(val(test))
 
-test <- "8.8.8.8.8"
+test <- "8.8.8.8"
 stopifnot(val(test))
 
 test <- "255.255.255.255"
@@ -13,6 +13,9 @@ stopifnot(val(test))
 
 # should be false
 test <- "11127.0.0.1"
+stopifnot(!val(test))
+
+test <- "8.8.8.8.8"
 stopifnot(!val(test))
 
 test <- "-127.0.0.1"

@@ -30,9 +30,15 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+#include "platform.h"
+
 #define CHARPT(x) ((char*)CHAR(STRING_ELT(x,0)))
 
+#if OS_WINDOWS
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
+#ifndef InetPton // for all my windows xp bros out there
 static inline bool check_octet(char *buf, const char *ip, const int start, const int end)
 {
   int i;
@@ -51,15 +57,12 @@ static inline bool check_octet(char *buf, const char *ip, const int start, const
   return (x >= 0 && x <= 255);
 }
 
-SEXP C_validate_ipv4(SEXP ip_)
+INT InetPton(int af, const char *ip, void *dst)
 {
-  SEXP ret;
   bool check;
   int end_locs[4];
   char buf[4];
-  const char * ip = CHARPT(ip_);
   int i = 0, j = 0;
-  
   
   memset(end_locs, 0, 4*sizeof(int));
   
@@ -69,10 +72,16 @@ SEXP C_validate_ipv4(SEXP ip_)
     {
       end_locs[j] = i;
       j++;
+      
+      if (j >= 4)
+        break;
     }
     
     i++;
   }
+  
+  if (ip[i] != '\0')
+    return false;
   
   end_locs[j] = i;
   
@@ -82,21 +91,39 @@ SEXP C_validate_ipv4(SEXP ip_)
   {
     if (end_locs[i] == 0)
     {
-      check = false;
-      goto set_return;
+      return false;
     }
     else
     {
       check = check_octet(buf, ip, j, end_locs[i]);
       if (!check)
-        goto set_return;
+        return(check);
       
       j = end_locs[i]+1;
     }
   }
   
+  return check;
+}
+#endif
+
+#else
+#include <arpa/inet.h>
+#endif
+
+SEXP C_validate_ipv4(SEXP ip_)
+{
+  SEXP ret;
+  const char *ip = CHARPT(ip_);
+  int check;
+  struct sockaddr_in sa;
   
-  set_return:
+#if OS_WINDOWS
+  check = InetPton(AF_INET, ip, &(sa.sin_addr));
+#else
+  check = (inet_pton(AF_INET, ip, &(sa.sin_addr)) != 0);
+#endif
+  
   PROTECT(ret = allocVector(LGLSXP, 1));
   LOGICAL(ret)[0] = check;
   UNPROTECT(1);

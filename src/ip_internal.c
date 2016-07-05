@@ -164,11 +164,11 @@ SEXP ip_internal_win()
 SEXP C_ip_internal()
 {
   SEXP ret;
-  #if OS_WINDOWS
+#if OS_WINDOWS
   ret = ip_internal_win();
-  #else
+#else
   ret = ip_internal_nix();
-  #endif
+#endif
   
   return ret;
 }
