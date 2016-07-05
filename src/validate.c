@@ -38,6 +38,9 @@ static inline bool check_octet(char *buf, const char *ip, const int start, const
   int i;
   int x;
   
+  if (end-start > 3)
+    return false;
+  
   for (i=0; i<(end-start); i++)
     buf[i] = ip[i+start];
   
