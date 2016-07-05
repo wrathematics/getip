@@ -103,8 +103,59 @@ SEXP ip_internal_nix()
 
 
 #if OS_WINDOWS
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+
+#define CHECK_ALLOC(ptr) \
+  if (ptr == NULL) \
+    error("Unable to allocate memory\n");
+
 SEXP ip_internal_win()
 {
+  SEXP ip;
+  char *addr;
+  
+  PMIB_IPADDRTABLE pIPAddrTable, realloc_ptr;
+  DWORD pdwSize = 0;
+  DWORD check;
+  IN_ADDR IPAddr;
+  
+  pIPAddrTable = malloc(sizeof(MIB_IPADDRTABLE));
+  CHECK_ALLOC(pIPAddrTable);
+  
+  if (GetIpAddrTable(pIPAddrTable, &pdwSize, 0) == ERROR_INSUFFICIENT_BUFFER)
+  {
+    realloc_ptr = (MIB_IPADDRTABLE *) realloc(pIPAddrTable, pdwSize);
+    CHECK_ALLOC(realloc_ptr);
+    pIPAddrTable = realloc_ptr;
+  }
+  
+  check = GetIpAddrTable(pIPAddrTable, &pdwSize, 0);
+  if (check != NO_ERROR )
+    error("GetIpAddrTable returned error number %d\n", check);
+  
+  const int num_entries = pIPAddrTable->dwNumEntries;
+  for (int i=0; i<num_entries; i++)
+  {
+    IPAddr.S_un.S_addr = pIPAddrTable->table[i].dwAddr;
+    addr = inet_ntoa(IPAddr);
+    
+    const BOOL is_primary = pIPAddrTable->table[i].wType & MIB_IPADDR_PRIMARY;
+    if (strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0 && is_primary)
+    {
+      SETRET(ip, addr);
+      if (pIPAddrTable)
+        free(pIPAddrTable);
+      
+      return ip;
+    }
+  }
+  
+  if (pIPAddrTable)
+    free(pIPAddrTable);
+  
+  error(ERRMSG);
   return R_NilValue;
 }
 #endif
