@@ -37,8 +37,11 @@
 #if OS_WINDOWS
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 
-#ifndef InetPton // for all my windows xp bros out there
+// Every windows before vista lacks InetPton, and there's no reliable way
+// to build this conditionally since Windows doesn't really have a build system.
+// tldr: windows continues to be an annoying joke
 static inline bool check_octet(char *buf, const char *ip, const int start, const int end)
 {
   int i;
@@ -57,7 +60,7 @@ static inline bool check_octet(char *buf, const char *ip, const int start, const
   return (x >= 0 && x <= 255);
 }
 
-INT InetPton(int af, const char *ip, void *dst)
+static int inet_pton_v4(const char *ip)
 {
   bool check;
   int end_locs[4];
@@ -105,7 +108,11 @@ INT InetPton(int af, const char *ip, void *dst)
   
   return check;
 }
-#endif
+
+int inet_pton(int af, const char *src, void *dst)
+{
+  return inet_pton_v4(src);
+}
 
 #else
 #include <arpa/inet.h>
@@ -118,11 +125,7 @@ SEXP C_validate_ipv4(SEXP ip_)
   int check;
   struct sockaddr_in sa;
   
-#if OS_WINDOWS
-  check = InetPton(AF_INET, ip, &(sa.sin_addr));
-#else
   check = (inet_pton(AF_INET, ip, &(sa.sin_addr)) != 0);
-#endif
   
   PROTECT(ret = allocVector(LGLSXP, 1));
   LOGICAL(ret)[0] = check;
