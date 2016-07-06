@@ -46,7 +46,7 @@
 
 
 
-#if !OS_WINDOWS
+#if !OS_WINDOWS && !OS_SOLARIS
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <sys/socket.h>
@@ -101,6 +101,14 @@ SEXP ip_internal_nix()
 }
 #endif
 
+
+#if OS_SOLARIS
+// Solaris 10 does not have "ifaddrs.h". Solaris 11 may have it.
+SEXP ip_internal_nix()
+{
+  return R_NilValue;
+}
+#endif
 
 #if OS_WINDOWS
 #include <winsock2.h>
