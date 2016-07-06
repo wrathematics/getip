@@ -1,4 +1,4 @@
-## This is free and unencumbered software released into the public domain.
+## This file is free and unencumbered software released into the public domain.
 ## See the Unlicense specification for full details http://unlicense.org/
 
 ## Process with:
