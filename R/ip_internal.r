@@ -17,9 +17,16 @@
 #' @export
 ip_internal <- function()
 {
-  if (!issolaris())
-    ip <- .Call(C_ip_internal)
-  else
+  ip <- .Call(C_ip_internal, PACKAGE = "getip")
+  return(ip)
+}
+
+
+ip_internal_solaris <- function()
+{
+  ip <- NULL
+
+  if (Sys.info()["sysname"] == "SunOS")
   {
     ### For Solaris 10 only. Solaris 11 may have "ifaddrs.h"
     cmd <- "/usr/sbin/ifconfig -a4"
@@ -44,11 +51,9 @@ ip_internal <- function()
       }
     }
   }
+  else
+    stop("OS is not Solaris")
 
   return(ip)
 }
 
-issolaris <- function()
-{
-  Sys.info()["sysname"] == "SunOS"
-}

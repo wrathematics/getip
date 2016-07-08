@@ -27,8 +27,8 @@
 
 #include <R.h>
 #include <Rinternals.h>
-#include <stdlib.h>
-#include <stdio.h>
+// #include <stdlib.h>
+// #include <stdio.h>
 #include <string.h>
 
 #include "platform.h"
@@ -46,7 +46,7 @@
 
 
 
-#if !OS_WINDOWS && !OS_SOLARIS
+#if !OS_WINDOWS && HAS_IFADDRS
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <sys/socket.h>
@@ -102,13 +102,78 @@ SEXP ip_internal_nix()
 #endif
 
 
-#if OS_SOLARIS
+#if NO_IFADDRS
 // Solaris 10 does not have "ifaddrs.h". Solaris 11 may have it.
+#include <net/if.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+#if OS_SOLARIS
+#include <unistd.h>
+#include <stropts.h>
+#include <sys/sockio.h>
+#endif
+
+// FIXME this SHOULD be in net/if.h, but doesn't get included for some insane reason
+#ifndef IFF_LOOPBACK
+#define IFF_LOOPBACK 0 // skip if undefined
+#endif
+
+#define MAX_IFR 10
+
+// hope they don't do something weird lol
 SEXP ip_internal_nix()
 {
+  SEXP ip;
+  struct ifconf ifc;
+  struct ifreq ifr[MAX_IFR];  /* more than 10 will be dropped. */
+  int sd, ifc_num, i;
+  char *addr;
+
+  sd = socket(PF_INET, SOCK_DGRAM, 0);
+  if (sd > 0)
+  {
+    ifc.ifc_len = sizeof(ifr);
+    ifc.ifc_ifcu.ifcu_buf = (caddr_t)ifr;
+
+    if (ioctl(sd, SIOCGIFCONF, &ifc) == 0)
+    {
+      ifc_num = ifc.ifc_len / sizeof(struct ifreq);
+      if(ifc_num > MAX_IFR)
+        ifc_num = MAX_IFR;
+
+      for (i = 0; i < ifc_num; ++i)
+      {
+        if (ifr[i].ifr_addr.sa_family != AF_INET)
+          continue;
+
+        if (ioctl(sd, SIOCGIFADDR, &ifr[i]) == 0)
+        {
+          addr = inet_ntoa(((struct sockaddr_in *)(&ifr[i].ifr_addr))->sin_addr);
+          if (strncmp(ifr[i].ifr_name, "lo", 2)   != 0  && 
+              strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
+              !(ifr[i].ifr_flags & IFF_LOOPBACK) )
+          {
+            SETRET(ip, addr);
+            shutdown(sd, 2);
+            return ip;
+          }
+        }
+      }
+    }
+  }
+
+  /* Found nothing. */
+  shutdown(sd, 2);
+  error(ERRMSG);
+
   return R_NilValue;
 }
 #endif
+
 
 #if OS_WINDOWS
 #include <winsock2.h>
