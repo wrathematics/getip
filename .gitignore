@@ -3,3 +3,6 @@
 
 src/*.o
 src/*.so
+
+src/Makevars
+config.status
