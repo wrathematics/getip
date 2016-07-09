@@ -1,5 +1,7 @@
 #! /bin/sh
-
+rm -rf ./chm
+rm -rf ./config.*
+rm -rf ./autom4te.cache
 rm -rf ./src/Makevars
 rm -rf ./src/*.dylib
 rm -rf ./src/*.so*
@@ -10,3 +12,4 @@ rm -rf ./src/*.a
 rm -rf ./src/*.rc
 rm -rf ./src/*.rds
 rm -rf ./src-*
+rm -rf ./man/*.pdf
