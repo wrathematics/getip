@@ -28,8 +28,6 @@
 
 #include <R.h>
 #include <Rinternals.h>
-// #include <stdlib.h>
-// #include <stdio.h>
 #include <string.h>
 
 #include "platform.h"
@@ -47,9 +45,8 @@
 
 
 
-#if !OS_WINDOWS && HAS_IFADDRS
+#if !OS_WINDOWS
 #include <sys/types.h>
-#include <ifaddrs.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -61,8 +58,11 @@
 #define IFF_LOOPBACK 0 // skip if undefined
 #endif
 
+#if HAS_IFADDRS
+#include <ifaddrs.h>
+
 // hope they don't do something weird lol
-SEXP ip_internal_nix()
+static inline SEXP ip_internal_nix()
 {
   SEXP ip;
   struct ifaddrs *ifaddrs_p, *start;
@@ -87,8 +87,7 @@ SEXP ip_internal_nix()
       {
         SETRET(ip, addr);
         freeifaddrs(start);
-
-        //WCC: the first detected none loopback is the right one?!
+        
         return ip;
       }
     }
@@ -101,31 +100,15 @@ SEXP ip_internal_nix()
   
   return R_NilValue;
 }
-#endif
 
-
-#if NO_IFADDRS
-// Solaris 10 does not have "ifaddrs.h". Solaris 11 may have it.
-#include <net/if.h>
-#include <netinet/in.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
+#elif NO_IFADDRS
 #if OS_SOLARIS
 #include <unistd.h>
 #include <stropts.h>
 #include <sys/sockio.h>
 #endif
 
-// FIXME this SHOULD be in net/if.h, but doesn't get included for some insane reason
-#ifndef IFF_LOOPBACK
-#define IFF_LOOPBACK 0 // skip if undefined
-#endif
-
-// hope they don't do something weird lol
-SEXP ip_internal_nix()
+static inline SEXP ip_internal_nix()
 {
   SEXP ip;
   struct ifconf ifc;
@@ -133,7 +116,7 @@ SEXP ip_internal_nix()
   struct sockaddr_in *pAddr;
   int sd, ifc_num, i;
   char *addr;
-
+  
   sd = socket(PF_INET, SOCK_DGRAM, 0);
   if (sd > 0)
   {
@@ -142,32 +125,25 @@ SEXP ip_internal_nix()
     {
       ifr = malloc(ifc.ifc_len);
       ifc.ifc_ifcu.ifcu_req = ifr;
-
+      
       // retrive the interface list
       if (ioctl(sd, SIOCGIFCONF, &ifc) == 0)
       {
         ifc_num = ifc.ifc_len / sizeof(struct ifreq);
-#ifdef SOCKET_DEBUG
-          printf("%d interfaces found\n", ifc_num);
-#endif
-
+        
         // do the work similar to ifaddrs_p
         for (i = 0; i < ifc_num; i++) {
           socket_p = &ifr[i];
           if (socket_p->ifr_addr.sa_family != AF_INET)
             continue;
-
+          
           if (ioctl(sd, SIOCGIFADDR, socket_p) == 0)
           {
             pAddr = (struct sockaddr_in *) &socket_p->ifr_addr;
-
+            
             addr = inet_ntoa(pAddr->sin_addr);
-
-#ifdef SOCKET_DEBUG
-            printf("%s : %s\n", socket_p->ifr_name, addr);
-#endif
-
-            if (strncmp(socket_p->ifr_name, "lo", 2)   != 0  && 
+            
+            if (strncmp(socket_p->ifr_name, "lo", 2)    != 0  && 
                 strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
                 !(socket_p->ifr_flags & IFF_LOOPBACK) )
             {
@@ -179,19 +155,21 @@ SEXP ip_internal_nix()
           }
         }
       }
-
+      
       // in case not found
       free(ifr);
     }
   }
-
+  
   // found nothing
   shutdown(sd, 2);
   error(ERRMSG);
-
+  
   return R_NilValue;
 }
-#endif
+#endif // end of IF_ADDRS conditional
+#endif // end #if !OS_WINDOWS
+
 
 
 #if OS_WINDOWS
@@ -203,7 +181,7 @@ SEXP ip_internal_nix()
   if (ptr == NULL) \
     error("Unable to allocate memory\n");
 
-SEXP ip_internal_win()
+static inline SEXP ip_internal_win()
 {
   SEXP ip;
   char *addr;
