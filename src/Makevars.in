@@ -1,0 +1,5 @@
+PKG_CPPFLAGS = @IFADDRS@
+PKG_LIBS = @SOCKET_LIBS@
+
+### manually unmark the next for debugging in ubuntu/mac only
+# PKG_CPPFLAGS = -DNO_IFADDRS -DSOCKET_DEBUG
