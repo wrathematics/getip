@@ -1,3 +1,5 @@
+### Ensures that the internal ipv4 validation method operates correctly
+
 valid <- getip:::valididate_ipv4
 
 # should be true
