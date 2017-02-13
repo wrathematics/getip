@@ -116,6 +116,9 @@ int inet_pton(int af, const char *src, void *dst)
 
 #else
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #endif
 
 SEXP C_validate_ipv4(SEXP ip_)
