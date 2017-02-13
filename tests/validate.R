@@ -1,6 +1,6 @@
 ### Ensures that the internal ipv4 validation method operates correctly
 
-valid <- getip:::valididate_ipv4
+valid <- getip:::validate_ipv4
 
 # should be true
 test <- "127.0.0.1"
