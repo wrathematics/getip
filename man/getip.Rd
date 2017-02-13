@@ -7,13 +7,13 @@
 getip(type = "internal")
 }
 \value{
-Returns the local IP address as a string.
+Returns the requested IP address as a string.
 }
 \description{
 Get your internal/local or external/public IP address.
 }
 \details{
-The lookup is done in-process, i.e., it does not call
+The internal/local IP lookup is done in-process, i.e., it does not call
 \code{system()} or the like.
 
 The function returns a lookup from one of several services, including
