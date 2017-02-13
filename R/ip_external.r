@@ -1,23 +1,3 @@
-#' ip_external
-#' 
-#' Get your external/public IP address.
-#' 
-#' @details
-#' The function returns a lookup from one of several services, including
-#' Amazon AWS \url{http://checkip.amazonaws.com/}, 
-#' httpbin \url{http://httpbin.org/ip}, ipify \url{https://www.ipify.org/},
-#' and "My External IP address is ..." \url{http://myexternalip.com/}.
-#' You must be connected to the internet for this to work.
-#' 
-#' @return
-#' Returns the local IP address as a string.
-#' 
-#' @examples
-#' \dontrun{
-#' ip_external()
-#' }
-#' 
-#' @export
 ip_external <- function()
 {
   services <- c("amazonaws", "httpbin", "ipify", "myexternalip")
