@@ -4,13 +4,18 @@
 \alias{getip}
 \title{ip_external}
 \usage{
-getip(type = "internal")
+getip(type = "local")
+}
+\arguments{
+\item{type}{One of \code{"local"} or \code{"internal"} for the local/internal IP, or
+one of \code{"external"} or \code{"public"} for the external/public IP.}
 }
 \value{
 Returns the requested IP address as a string.
 }
 \description{
-Get your internal/local or external/public IP address.
+Get your internal/local or external/public IP address.  Currently only IPv4
+addresses are supported.
 }
 \details{
 The internal/local IP lookup is done in-process, i.e., it does not call
@@ -20,15 +25,18 @@ The function returns a lookup from one of several services, including
 Amazon AWS \url{http://checkip.amazonaws.com/}, 
 httpbin \url{http://httpbin.org/ip}, ipify \url{https://www.ipify.org/},
 and "My External IP address is ..." \url{http://myexternalip.com/}.
-You must be connected to the internet for this to work.
+You must be connected to the internet for this to work.  Please note that
+pathological use could end up in your getting banned from these services, 
+rendering the function useless.  Make sure you don't accidentally call this
+function a billion times in a loop or something.
 }
 \examples{
 \dontrun{
 # internal/local address
-getip("internal")
+getip("local") # same as getip("internal")
 
 # external/public
-getip("external")
+getip("public") # same as getip("external")
 }
 
 }
