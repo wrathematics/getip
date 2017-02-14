@@ -107,56 +107,46 @@ static inline SEXP ip_internal_nix()
 #include <sys/sockio.h>
 #endif
 
+#define MAX_IFR 10
+
 static inline SEXP ip_internal_nix()
 {
   SEXP ip;
   struct ifconf ifc;
-  struct ifreq *ifr, *socket_p;
-  struct sockaddr_in *pAddr;
+  struct ifreq ifr[MAX_IFR];  /* more than 10 will be dropped. */
   int sd, ifc_num, i;
   char *addr;
   
   sd = socket(PF_INET, SOCK_DGRAM, 0);
   if (sd > 0)
   {
-    // find number of interfaces
+    ifc.ifc_len = sizeof(ifr);
+    ifc.ifc_ifcu.ifcu_buf = (caddr_t)ifr;
+    
     if (ioctl(sd, SIOCGIFCONF, &ifc) == 0)
     {
-      ifr = malloc(ifc.ifc_len);
-      ifc.ifc_ifcu.ifcu_req = ifr;
+      ifc_num = ifc.ifc_len / sizeof(struct ifreq);
+      if (ifc_num > MAX_IFR)
+        ifc_num = MAX_IFR;
       
-      // retrive the interface list
-      if (ioctl(sd, SIOCGIFCONF, &ifc) == 0)
+      for (i = 0; i < ifc_num; ++i)
       {
-        ifc_num = ifc.ifc_len / sizeof(struct ifreq);
+        if (ifr[i].ifr_addr.sa_family != AF_INET)
+          continue;
         
-        // do the work similar to ifaddrs_p
-        for (i = 0; i < ifc_num; i++) {
-          socket_p = &ifr[i];
-          if (socket_p->ifr_addr.sa_family != AF_INET)
-            continue;
-          
-          if (ioctl(sd, SIOCGIFADDR, socket_p) == 0)
+        if (ioctl(sd, SIOCGIFADDR, &ifr[i]) == 0)
+        {
+          addr = inet_ntoa(((struct sockaddr_in *)(&ifr[i].ifr_addr))->sin_addr);
+          if (strncmp(ifr[i].ifr_name, "lo", 2)       != 0  && 
+              strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
+              !(ifr[i].ifr_flags & IFF_LOOPBACK) )
           {
-            pAddr = (struct sockaddr_in *) &socket_p->ifr_addr;
-            
-            addr = inet_ntoa(pAddr->sin_addr);
-            
-            if (strncmp(socket_p->ifr_name, "lo", 2)    != 0  && 
-                strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
-                !(socket_p->ifr_flags & IFF_LOOPBACK) )
-            {
-              SETRET(ip, addr);
-              shutdown(sd, 2);
-              free(ifr);
-              return ip;
-            }
+            SETRET(ip, addr);
+            shutdown(sd, 2);
+            return ip;
           }
         }
       }
-      
-      // in case not found
-      free(ifr);
     }
   }
   
@@ -170,6 +160,9 @@ static inline SEXP ip_internal_nix()
 #endif // end #if !OS_WINDOWS
 
 
+// -----------------------------------------------------------------------------
+// Windows
+// -----------------------------------------------------------------------------
 
 #if OS_WINDOWS
 #include <winsock2.h>
@@ -229,6 +222,10 @@ static inline SEXP ip_internal_win()
 #endif
 
 
+
+// -----------------------------------------------------------------------------
+// Wrapper
+// -----------------------------------------------------------------------------
 
 SEXP R_ip_internal()
 {
