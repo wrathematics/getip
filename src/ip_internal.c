@@ -44,7 +44,11 @@
 
 
 
-#if !OS_WINDOWS
+// -----------------------------------------------------------------------------
+// *nix
+// -----------------------------------------------------------------------------
+
+#if OS_NIX
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -57,11 +61,14 @@
 #define IFF_LOOPBACK 0 // skip if undefined
 #endif
 
+// ------------------------------------
+// version 1: if we have getifaddrs()
+// ------------------------------------
 #if HAS_IFADDRS
 #include <ifaddrs.h>
 
 // hope they don't do something weird lol
-static inline SEXP ip_internal_nix()
+static inline SEXP ip_internal()
 {
   SEXP ip;
   struct ifaddrs *ifaddrs_p, *start;
@@ -100,6 +107,9 @@ static inline SEXP ip_internal_nix()
   return R_NilValue;
 }
 
+// ------------------------------------
+// version 2: if we DON'T have getifaddrs()
+// ------------------------------------
 #elif NO_IFADDRS
 #if OS_SOLARIS
 #include <unistd.h>
@@ -107,13 +117,13 @@ static inline SEXP ip_internal_nix()
 #include <sys/sockio.h>
 #endif
 
-#define MAX_IFR 10
+#define MAX_IFR 10 // only 10 interfaces will be queried
 
-static inline SEXP ip_internal_nix()
+static inline SEXP ip_internal()
 {
   SEXP ip;
   struct ifconf ifc;
-  struct ifreq ifr[MAX_IFR];  /* more than 10 will be dropped. */
+  struct ifreq ifr[MAX_IFR];
   int sd, ifc_num, i;
   char *addr;
   
@@ -157,14 +167,14 @@ static inline SEXP ip_internal_nix()
   return R_NilValue;
 }
 #endif // end of IF_ADDRS conditional
-#endif // end #if !OS_WINDOWS
+
 
 
 // -----------------------------------------------------------------------------
 // Windows
 // -----------------------------------------------------------------------------
 
-#if OS_WINDOWS
+#elif OS_WINDOWS
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
@@ -173,7 +183,7 @@ static inline SEXP ip_internal_nix()
   if (ptr == NULL) \
     error("Unable to allocate memory\n");
 
-static inline SEXP ip_internal_win()
+static inline SEXP ip_internal()
 {
   SEXP ip;
   char *addr;
@@ -219,6 +229,19 @@ static inline SEXP ip_internal_win()
   
   return R_NilValue;
 }
+
+
+
+// -----------------------------------------------------------------------------
+// Some other, mysterious, unsupported platform
+// -----------------------------------------------------------------------------
+
+#else
+static inline SEXP ip_internal()
+{
+  error("OS is not detectable as one of Windows or *NIX; platform unsupported");
+  return R_NilValue;
+}
 #endif
 
 
@@ -229,12 +252,5 @@ static inline SEXP ip_internal_win()
 
 SEXP R_ip_internal()
 {
-  SEXP ret;
-#if OS_WINDOWS
-  ret = ip_internal_win();
-#else
-  ret = ip_internal_nix();
-#endif
-  
-  return ret;
+  return ip_internal();
 }
