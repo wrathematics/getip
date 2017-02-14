@@ -1,4 +1,4 @@
 Release 0.1-0:
-  * Add ip_internal.
-  * Add ip_external.
+  * Add internal IP lookup.
   * Add native socket to get interfaces.
+  * Add external IP lookup.
