@@ -40,12 +40,13 @@ static inline int is_na(SEXP x)
   }
 }
 
-static inline int is_badnum(SEXP x)
+static inline int is_badval(SEXP x)
 {
   switch (TYPEOF(x))
   {
     case LGLSXP:
     case INTSXP:
+    case STRSXP:
       return is_na(x);
     case REALSXP:
       return is_na(x) || ISNAN(REAL(x)[0]) || !R_FINITE(REAL(x)[0]);
@@ -71,7 +72,7 @@ static inline int is_inty(SEXP x)
 
 static inline int is_annoying(SEXP x)
 {
-  return (LENGTH(x) != 1 || is_badnum(x));
+  return (LENGTH(x) != 1 || is_badval(x));
 }
 
 static inline int is_negative(SEXP x)
@@ -147,6 +148,11 @@ static inline int is_num(SEXP x)
 #define CHECK_IS_STRING(...) \
   if (!is_str(REACTOR_FIRST(__VA_ARGS__)) || is_annoying(REACTOR_FIRST(__VA_ARGS__))){ \
     REACTOR_ERRMSG("a string (single non-NA character string)", __VA_ARGS__);}
+
+#define CHECK_IS_STRINGS(...) \
+  if (!is_str(REACTOR_FIRST(__VA_ARGS__)) || LENGTH(REACTOR_FIRST(__VA_ARGS__)) == 0){ \
+    REACTOR_ERRMSG("a vector of strings", __VA_ARGS__);}
+
 
 
 #define CHECK_IS_INT(...) \
