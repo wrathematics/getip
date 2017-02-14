@@ -5,7 +5,7 @@
 #'
 #' @name getip-package
 #' 
-#' @useDynLib getip C_ip_internal C_validate_ipv4
+#' @useDynLib getip R_ip_internal R_validate_ipv4
 #' 
 #' @docType package
 #' @author Drew Schmidt

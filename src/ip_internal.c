@@ -230,7 +230,7 @@ static inline SEXP ip_internal_win()
 
 
 
-SEXP C_ip_internal()
+SEXP R_ip_internal()
 {
   SEXP ret;
 #if OS_WINDOWS
