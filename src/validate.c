@@ -121,7 +121,7 @@ int inet_pton(int af, const char *src, void *dst)
 #include <netinet/in.h>
 #endif
 
-SEXP C_validate_ipv4(SEXP ip_)
+SEXP R_validate_ipv4(SEXP ip_)
 {
   SEXP ret;
   const char *ip = CHARPT(ip_);
