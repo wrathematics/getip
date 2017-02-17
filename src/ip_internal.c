@@ -1,17 +1,17 @@
 /*  Copyright (c) 2015-2016, Drew Schmidt, 
     Copyright (c) 2016 Wei-Chen
     All rights reserved.
-
+    
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
-
+    
     1. Redistributions of source code must retain the above copyright notice,
     this list of conditions and the following disclaimer.
-
+    
     2. Redistributions in binary form must reproduce the above copyright
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.
-
+    
     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
     "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -44,8 +44,11 @@
 
 
 
+// -----------------------------------------------------------------------------
+// *nix
+// -----------------------------------------------------------------------------
 
-#if !OS_WINDOWS
+#if OS_NIX
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -53,16 +56,19 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
-// FIXME this SHOULD be in net/if.h, but doesn't get included for some insane reason
+// NOTE this SHOULD be in net/if.h, but doesn't get included for some insane reason
 #ifndef IFF_LOOPBACK
 #define IFF_LOOPBACK 0 // skip if undefined
 #endif
 
+// ------------------------------------
+// version 1: if we have getifaddrs()
+// ------------------------------------
 #if HAS_IFADDRS
 #include <ifaddrs.h>
 
 // hope they don't do something weird lol
-static inline SEXP ip_internal_nix()
+static inline SEXP ip_internal()
 {
   SEXP ip;
   struct ifaddrs *ifaddrs_p, *start;
@@ -101,6 +107,9 @@ static inline SEXP ip_internal_nix()
   return R_NilValue;
 }
 
+// ------------------------------------
+// version 2: if we DON'T have getifaddrs()
+// ------------------------------------
 #elif NO_IFADDRS
 #if OS_SOLARIS
 #include <unistd.h>
@@ -108,56 +117,46 @@ static inline SEXP ip_internal_nix()
 #include <sys/sockio.h>
 #endif
 
-static inline SEXP ip_internal_nix()
+#define MAX_IFR 10 // only 10 interfaces will be queried
+
+static inline SEXP ip_internal()
 {
   SEXP ip;
   struct ifconf ifc;
-  struct ifreq *ifr, *socket_p;
-  struct sockaddr_in *pAddr;
+  struct ifreq ifr[MAX_IFR];
   int sd, ifc_num, i;
   char *addr;
   
   sd = socket(PF_INET, SOCK_DGRAM, 0);
   if (sd > 0)
   {
-    // find number of interfaces
+    ifc.ifc_len = sizeof(ifr);
+    ifc.ifc_ifcu.ifcu_buf = (caddr_t)ifr;
+    
     if (ioctl(sd, SIOCGIFCONF, &ifc) == 0)
     {
-      ifr = malloc(ifc.ifc_len);
-      ifc.ifc_ifcu.ifcu_req = ifr;
+      ifc_num = ifc.ifc_len / sizeof(struct ifreq);
+      if (ifc_num > MAX_IFR)
+        ifc_num = MAX_IFR;
       
-      // retrive the interface list
-      if (ioctl(sd, SIOCGIFCONF, &ifc) == 0)
+      for (i = 0; i < ifc_num; ++i)
       {
-        ifc_num = ifc.ifc_len / sizeof(struct ifreq);
+        if (ifr[i].ifr_addr.sa_family != AF_INET)
+          continue;
         
-        // do the work similar to ifaddrs_p
-        for (i = 0; i < ifc_num; i++) {
-          socket_p = &ifr[i];
-          if (socket_p->ifr_addr.sa_family != AF_INET)
-            continue;
-          
-          if (ioctl(sd, SIOCGIFADDR, socket_p) == 0)
+        if (ioctl(sd, SIOCGIFADDR, &ifr[i]) == 0)
+        {
+          addr = inet_ntoa(((struct sockaddr_in *)(&ifr[i].ifr_addr))->sin_addr);
+          if (strncmp(ifr[i].ifr_name, "lo", 2)       != 0  && 
+              strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
+              !(ifr[i].ifr_flags & IFF_LOOPBACK) )
           {
-            pAddr = (struct sockaddr_in *) &socket_p->ifr_addr;
-            
-            addr = inet_ntoa(pAddr->sin_addr);
-            
-            if (strncmp(socket_p->ifr_name, "lo", 2)    != 0  && 
-                strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
-                !(socket_p->ifr_flags & IFF_LOOPBACK) )
-            {
-              SETRET(ip, addr);
-              shutdown(sd, 2);
-              free(ifr);
-              return ip;
-            }
+            SETRET(ip, addr);
+            shutdown(sd, 2);
+            return ip;
           }
         }
       }
-      
-      // in case not found
-      free(ifr);
     }
   }
   
@@ -168,11 +167,14 @@ static inline SEXP ip_internal_nix()
   return R_NilValue;
 }
 #endif // end of IF_ADDRS conditional
-#endif // end #if !OS_WINDOWS
 
 
 
-#if OS_WINDOWS
+// -----------------------------------------------------------------------------
+// Windows
+// -----------------------------------------------------------------------------
+
+#elif OS_WINDOWS
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
@@ -181,7 +183,7 @@ static inline SEXP ip_internal_nix()
   if (ptr == NULL) \
     error("Unable to allocate memory\n");
 
-static inline SEXP ip_internal_win()
+static inline SEXP ip_internal()
 {
   SEXP ip;
   char *addr;
@@ -227,18 +229,28 @@ static inline SEXP ip_internal_win()
   
   return R_NilValue;
 }
-#endif
 
 
 
-SEXP C_ip_internal()
-{
-  SEXP ret;
-#if OS_WINDOWS
-  ret = ip_internal_win();
+// -----------------------------------------------------------------------------
+// Some other, mysterious, unsupported platform
+// -----------------------------------------------------------------------------
+
 #else
-  ret = ip_internal_nix();
+static inline SEXP ip_internal()
+{
+  error("OS is not detectable as one of Windows or *NIX; platform unsupported");
+  return R_NilValue;
+}
 #endif
-  
-  return ret;
+
+
+
+// -----------------------------------------------------------------------------
+// Wrapper
+// -----------------------------------------------------------------------------
+
+SEXP R_ip_internal()
+{
+  return ip_internal();
 }

@@ -6,7 +6,10 @@
 * **License:** [![License](http://img.shields.io/badge/license-BSD%202--Clause-orange.svg?style=flat)](http://opensource.org/licenses/BSD-2-Clause)
 * **Author:** Drew Schmidt
 
-A micro-package for getting your IP address, either the local or external one.
+
+A micro-package for getting your IP address, either the local/internal or the public/external one.  Currently only IPv4 addresses are supported.
+
+
 
 ## Installation
 
@@ -30,11 +33,14 @@ remotes::install_github("wrathematics/getip")
 To get your local (internal) IP address:
 
 ```r
-getip::ip_internal()
+getip::getip("internal")
 ```
 
 To get your public (external) IP address:
 
 ```r
-getip::ip_external()
+getip::getip("external")
 ```
+
+
+The argument is case-insensitive and operates by partial matching.  So if you're very lazy, you can just type `getip("e")` for the external IP.
