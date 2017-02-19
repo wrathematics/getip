@@ -108,7 +108,7 @@ static inline SEXP ip_internal()
 }
 
 // ------------------------------------
-// version 2: if we DON'T have getifaddrs()
+// version 3: if we DON'T have getifaddrs()
 // ------------------------------------
 #elif NO_IFADDRS
 #if OS_SOLARIS
@@ -117,54 +117,73 @@ static inline SEXP ip_internal()
 #include <sys/sockio.h>
 #endif
 
-#define MAX_IFR 10 // only 10 interfaces will be queried
+#define MAX_IFR 64 // only 64 interfaces will be quried
 
-static inline SEXP ip_internal()
+SEXP ip_internal()
 {
-  SEXP ip;
+  SEXP ip = R_NilValue;
   struct ifconf ifc;
-  struct ifreq ifr[MAX_IFR];
-  int sd, ifc_num, i;
+  struct ifreq *ifr, *socket_p;
+  struct sockaddr_in *pAddr;
+  int sd, i;
   char *addr;
-  
+
   sd = socket(PF_INET, SOCK_DGRAM, 0);
   if (sd > 0)
   {
-    ifc.ifc_len = sizeof(ifr);
+    // get buffer for interfaces
+    ifc.ifc_len = sizeof(struct ifreq) * MAX_IFR;
+    ifr = malloc(ifc.ifc_len);
+    if(ifr == NULL)
+    {
+      shutdown(sd, 2);
+      error("malloc fail in ip_internal().");
+    }
     ifc.ifc_ifcu.ifcu_buf = (caddr_t)ifr;
-    
+
+    // find interfaces
     if (ioctl(sd, SIOCGIFCONF, &ifc) == 0)
     {
-      ifc_num = ifc.ifc_len / sizeof(struct ifreq);
-      if (ifc_num > MAX_IFR)
-        ifc_num = MAX_IFR;
-      
-      for (i = 0; i < ifc_num; ++i)
+      // do the work similar to ifaddrs_p
+      for (i = 0; i < MAX_IFR; i++)
       {
-        if (ifr[i].ifr_addr.sa_family != AF_INET)
+        socket_p = &ifr[i];
+        if (socket_p->ifr_addr.sa_family != AF_INET)
           continue;
-        
-        if (ioctl(sd, SIOCGIFADDR, &ifr[i]) == 0)
+
+        // check the interface who has a ip
+        if (ioctl(sd, SIOCGIFADDR, socket_p) == 0)
         {
-          addr = inet_ntoa(((struct sockaddr_in *)(&ifr[i].ifr_addr))->sin_addr);
-          if (strncmp(ifr[i].ifr_name, "lo", 2)       != 0  && 
+          pAddr = (struct sockaddr_in *) &socket_p->ifr_addr;
+          addr = inet_ntoa(pAddr->sin_addr);
+
+#ifdef SOCKET_DEBUG
+          Rprintf("%s : %s\n", socket_p->ifr_name, addr);
+#endif
+
+          // check if the ip is local
+          if (strncmp(socket_p->ifr_name, "lo", 2)   != 0  && 
               strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
-              !(ifr[i].ifr_flags & IFF_LOOPBACK) )
+              !(socket_p->ifr_flags & IFF_LOOPBACK) )
           {
             SETRET(ip, addr);
-            shutdown(sd, 2);
-            return ip;
+            break;  // only return the fist match, skip the rest
           }
         }
       }
     }
+
+    // free memory
+    free(ifr);
   }
-  
-  // found nothing
+  // close socket
   shutdown(sd, 2);
-  error(ERRMSG);
-  
-  return R_NilValue;
+
+  // found nothing
+  if (ip == R_NilValue)
+    error(ERRMSG);
+
+  return ip;
 }
 #endif // end of IF_ADDRS conditional
 
