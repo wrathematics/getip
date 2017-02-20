@@ -117,13 +117,6 @@ static inline SEXP ip_internal()
 #include <sys/sockio.h>
 #endif
 
-#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-#define ifreq_len(ifr) \
- max(sizeof(struct ifreq), sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len)
-#else
-#define ifreq_len(ifr) sizeof(struct ifreq)
-#endif
-
 // TODO
 #define BUFFER_SIZE 1024
 
@@ -164,7 +157,12 @@ SEXP ip_internal()
 
         // get the interface
         ifr = (struct ifreq *)(ifc.ifc_buf + offset);
-        offset += ifreq_len(ifr);
+        #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+          offset += max(sizeof(struct ifreq),
+                        sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len);
+        #else
+          offset += sizeof(struct ifreq);
+        #endif
 
         // check if IPv4
         if (ifr->ifr_addr.sa_family != AF_INET)

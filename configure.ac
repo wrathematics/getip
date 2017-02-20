@@ -27,6 +27,16 @@ if test "X$IFADDRS" = "X-DNO_IFADDRS" ; then
   fi
 fi
 
+dnl ifr may not be in an array format; use ifr_addr.sa_len to find the next ifr
+if test "X$IFADDRS" = "X-DNO_IFADDRS" ; then
+  AC_CHECK_MEMBER([struct sockaddr.sa_len], [], [], [#include <netinet/in.h>])
+  HAVE_SA_LEN=""
+  if test "X${ac_cv_member_struct_sockaddr_sa_len}" = "Xyes"; then
+    HAVE_SA_LEN="-DHAVE_STRUCT_SOCKADDR_SA_LEN"
+  fi
+fi
+
 AC_SUBST(IFADDRS)
 AC_SUBST(SOCKET_LIBS)
+AC_SUBST(HAVE_SA_LEN)
 AC_OUTPUT(src/Makevars)
