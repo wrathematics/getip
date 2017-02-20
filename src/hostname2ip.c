@@ -41,6 +41,8 @@
 #include <netinet/in.h>
 #elif OS_WINDOWS
 #include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 #endif
 
 
@@ -133,8 +135,77 @@ static SEXP hostname2ip(SEXP s_)
 
 static SEXP hostname2ip(SEXP s_)
 {
-  error("TODO");
-  return R_NilValue;
+  WSADATA wsad;
+  struct hostent *host;
+  struct in_addr addr;
+  SEXP ret;
+  const int len = LENGTH(s_);
+  
+  newRlist(ret, len);
+  
+  for (int i=0; i<len; i++)
+  {
+    SEXP ipvec;
+    const char *const s = STR(s_, i);
+    int num_addrs = 0;
+    
+    memset(&addr, 0, sizeof addr);
+    
+    // start winsock
+    int wserr = WSAStartup(MAKEWORD(2, 2), &wsad);
+    if (wserr != 0)
+    {
+      R_END;
+      error("WSAStartup() failed with error: %d\n", wserr);
+    }
+    
+    host = gethostbyname(s);
+    if (host == NULL)
+    {
+      DWORD errnum = WSAGetLastError();
+      
+      if (errnum != 0)
+      {
+        R_END;
+        
+        if (errnum == WSAHOST_NOT_FOUND || errnum == WSANO_DATA)
+          error("gethostbyname() failed with error \"Name or service not known\"\n      host:  %s\n      index: %i\n", s, i);
+        else
+          error("gethostbyname() failed with error: %ld\n", errnum);
+      }
+    }
+    
+    
+    // count number of addrs, then set return vector
+    if (host->h_addrtype == AF_INET)
+    {
+      while (host->h_addr_list[num_addrs])
+        num_addrs++;
+    }
+    
+    if (num_addrs == 0)
+    {
+      SET_VECTOR_ELT(ret, i, Rf_ScalarString(NA_STRING));
+      continue;
+    }
+    
+    newRvec(ipvec, num_addrs, "str");
+    num_addrs = 0;
+    
+    while (host->h_addr_list[num_addrs])
+    {
+      // have to manually set the field length for some reason ???
+      addr.s_addr = *(u_long*) host->h_addr_list[num_addrs];
+      SET_STRING_ELT(ipvec, num_addrs, mkChar(inet_ntoa(addr)));
+      num_addrs++;
+    }
+    
+    SET_VECTOR_ELT(ret, i, ipvec);
+  }
+  
+  
+  R_END;
+  return ret;
 }
 
 
