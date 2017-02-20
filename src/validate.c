@@ -30,7 +30,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-#include "platform.h"
+#include "include/platform.h"
 
 #define CHARPT(x) ((char*)CHAR(STRING_ELT(x,0)))
 

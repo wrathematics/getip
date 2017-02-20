@@ -1,4 +1,6 @@
 Release 0.1-0:
-  * Add internal IP lookup.
-  * Add native socket to get interfaces.
-  * Add external IP lookup.
+  * Added internal IP lookup.
+  * Added native socket to get interfaces.
+  * Added external IP lookup.
+  * Added hostname-to-ip lookup.
+

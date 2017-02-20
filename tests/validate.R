@@ -1,4 +1,5 @@
-### Ensures that the internal ipv4 validation method operates correctly
+### Ensures that the internal ipv4 validation method operates correctly. Does
+### not query any device or internet service (as getip() does).
 
 valid <- getip:::validate_ipv4
 

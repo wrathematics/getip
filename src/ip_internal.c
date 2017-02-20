@@ -30,7 +30,7 @@
 #include <Rinternals.h>
 #include <string.h>
 
-#include "platform.h"
+#include "include/platform.h"
 
 #define ERRMSG "Could not determine local IP"
 
@@ -107,8 +107,9 @@ static inline SEXP ip_internal()
   return R_NilValue;
 }
 
-// ------------------------------------
 // version 5: if we DON'T have getifaddrs()
+// version 2: if we DON'T have getifaddrs().
+// This should only run on solaris and other bizarre things you've never heard of
 // ------------------------------------
 #elif NO_IFADDRS
 #if OS_SOLARIS
