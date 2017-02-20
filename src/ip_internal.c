@@ -118,7 +118,7 @@ static inline SEXP ip_internal()
 #endif
 
 // TODO
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 
 SEXP ip_internal()
 {
@@ -144,10 +144,10 @@ SEXP ip_internal()
       return(ip);
     }
 
-    // get interface
+    // get interface from socket and assign/store to the ifc
     if (ioctl(sd, SIOCGIFCONF, (char *)&ifc) == 0)
     {
-      // start reading buffer
+      // start reading ifc buffer
       offset = 0;
       while (offset < ifc.ifc_len)
       {
@@ -155,19 +155,24 @@ SEXP ip_internal()
           Rprintf("offset: %d, ifc_len: %d\n", offset, ifc.ifc_len);
         #endif
 
-        // get the interface
+        // get the interface by moving the head pointer
         ifr = (struct ifreq *)(ifc.ifc_buf + offset);
+
+        // find the next ifreq head
         #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-          offset += max(sizeof(struct ifreq),
-                        sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len);
+          // this is mainly for MacOS 10.7
+          if(sizeof(struct ifreq) > sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len)
+            offset += sizeof(struct ifreq);
+          else
+            offset += sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len;
         #else
+          // this is mainly for Solaris and Ubuntu
           offset += sizeof(struct ifreq);
         #endif
 
-        // check if IPv4
+        // check if the interface is in IPv4
         if (ifr->ifr_addr.sa_family != AF_INET)
           continue;
-
         if (ioctl(sd, SIOCGIFADDR, ifr) < 0)
           continue;
 
@@ -178,7 +183,7 @@ SEXP ip_internal()
           Rprintf("%s : %s\n", ifr->ifr_name, addr);
         #endif
 
-        // check if internal
+        // check if the IPv4 is for internal
         if (strncmp(ifr->ifr_name, "lo", 2)   != 0  &&
             strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  &&
             !(ifr->ifr_flags & IFF_LOOPBACK) )
