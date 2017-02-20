@@ -42,7 +42,6 @@
   SET_STRING_ELT(ip, 0, mkChar(addr)); \
   UNPROTECT(1);
 
-static SEXP ip_internal();
 
 
 // -----------------------------------------------------------------------------

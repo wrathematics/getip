@@ -1,6 +1,7 @@
 PKG_CPPFLAGS = @IFADDRS@ @HAVE_SA_LEN@
 PKG_LIBS = @SOCKET_LIBS@
 
+
 ### manually unmark the next for debugging in ubuntu/mac only
 
 ### for Solaris and Ubuntu
