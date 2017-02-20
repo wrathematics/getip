@@ -108,13 +108,20 @@ static inline SEXP ip_internal()
 }
 
 // ------------------------------------
-// version 4: if we DON'T have getifaddrs()
+// version 5: if we DON'T have getifaddrs()
 // ------------------------------------
 #elif NO_IFADDRS
 #if OS_SOLARIS
 #include <unistd.h>
 #include <stropts.h>
 #include <sys/sockio.h>
+#endif
+
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+#define ifreq_len(ifr) \
+ max(sizeof(struct ifreq), sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len)
+#else
+#define ifreq_len(ifr) sizeof(struct ifreq)
 #endif
 
 // TODO
@@ -126,7 +133,7 @@ SEXP ip_internal()
   struct ifconf ifc;
   struct ifreq *ifr;
   struct sockaddr_in *pAddr;
-  int sd, addrlen, offset, len;
+  int sd, offset;
   char *addr;
 
   // check socket
@@ -147,27 +154,17 @@ SEXP ip_internal()
     // get interface
     if (ioctl(sd, SIOCGIFCONF, (char *)&ifc) == 0)
     {
-      addrlen = sizeof(struct ifreq) - IFNAMSIZ;
-      offset = 0;
-      len = 0;
-
       // start reading buffer
+      offset = 0;
       while (offset < ifc.ifc_len)
       {
         #ifdef SOCKET_DEBUG
-          Rprintf("len: %d, offset: %d, ifc_len: %d\n", len, offset, ifc.ifc_len);
+          Rprintf("offset: %d, ifc_len: %d\n", offset, ifc.ifc_len);
         #endif
 
         // get the interface
         ifr = (struct ifreq *)(ifc.ifc_buf + offset);
-
-        // search the next interface
-        #ifdef HAVE_SOCKADDR_SA_LEN
-          len = IFNAMSIZ + max(ifr->ifr_addr.sa_len, addrlen);
-        #else
-          len = sizeof(struct ifreq);
-        #endif
-        offset += len;
+        offset += ifreq_len(ifr);
 
         // check if IPv4
         if (ifr->ifr_addr.sa_family != AF_INET)
