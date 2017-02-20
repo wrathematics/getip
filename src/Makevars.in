@@ -1,5 +1,10 @@
-PKG_CPPFLAGS = @IFADDRS@
+PKG_CPPFLAGS = @IFADDRS@ @HAVE_SA_LEN@
 PKG_LIBS = @SOCKET_LIBS@
 
 ### manually unmark the next for debugging in ubuntu/mac only
-# PKG_CPPFLAGS = -DNO_IFADDRS -DSOCKET_DEBUG
+
+### for Solaris and Ubuntu
+# PKG_CPPFLAGS = -DNO_IFADDRS -DSOCKET_DEBUG -w
+
+### for Mac OS 10.7
+# PKG_CPPFLAGS = -DNO_IFADDRS -DSOCKET_DEBUG -DHAVE_STRUCT_SOCKADDR_SA_LEN -w

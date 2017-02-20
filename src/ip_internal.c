@@ -107,7 +107,7 @@ static inline SEXP ip_internal()
   return R_NilValue;
 }
 
-// ------------------------------------
+// version 5: if we DON'T have getifaddrs()
 // version 2: if we DON'T have getifaddrs().
 // This should only run on solaris and other bizarre things you've never heard of
 // ------------------------------------
@@ -118,54 +118,93 @@ static inline SEXP ip_internal()
 #include <sys/sockio.h>
 #endif
 
-#define MAX_IFR 10 // only 10 interfaces will be queried
+// TODO
+#define BUFFER_SIZE 2048
 
-static inline SEXP ip_internal()
+SEXP ip_internal()
 {
-  SEXP ip;
+  SEXP ip = R_NilValue;
   struct ifconf ifc;
-  struct ifreq ifr[MAX_IFR];
-  int sd, ifc_num, i;
+  struct ifreq *ifr;
+  struct sockaddr_in *pAddr;
+  int sd, offset;
   char *addr;
-  
-  sd = socket(PF_INET, SOCK_DGRAM, 0);
+
+  // check socket
+  sd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd > 0)
   {
-    ifc.ifc_len = sizeof(ifr);
-    ifc.ifc_ifcu.ifcu_buf = (caddr_t)ifr;
-    
-    if (ioctl(sd, SIOCGIFCONF, &ifc) == 0)
+    // assign buffer for the interface structure
+    ifc.ifc_len = sizeof(char) * BUFFER_SIZE;
+    ifc.ifc_buf = malloc(ifc.ifc_len);
+    if (ifc.ifc_buf == NULL)
     {
-      ifc_num = ifc.ifc_len / sizeof(struct ifreq);
-      if (ifc_num > MAX_IFR)
-        ifc_num = MAX_IFR;
-      
-      for (i = 0; i < ifc_num; ++i)
+      // close socket
+      shutdown(sd, 2);
+      error("malloc fails in ip_internal().");
+      return(ip);
+    }
+
+    // get interface from socket and assign/store to the ifc
+    if (ioctl(sd, SIOCGIFCONF, (char *)&ifc) == 0)
+    {
+      // start reading ifc buffer
+      offset = 0;
+      while (offset < ifc.ifc_len)
       {
-        if (ifr[i].ifr_addr.sa_family != AF_INET)
+        #ifdef SOCKET_DEBUG
+          Rprintf("offset: %d, ifc_len: %d\n", offset, ifc.ifc_len);
+        #endif
+
+        // get the interface by moving the head pointer
+        ifr = (struct ifreq *)(ifc.ifc_buf + offset);
+
+        // find the next ifreq head
+        #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+          // this is mainly for MacOS 10.7
+          if(sizeof(struct ifreq) > sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len)
+            offset += sizeof(struct ifreq);
+          else
+            offset += sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len;
+        #else
+          // this is mainly for Solaris and Ubuntu
+          offset += sizeof(struct ifreq);
+        #endif
+
+        // check if the interface is in IPv4
+        if (ifr->ifr_addr.sa_family != AF_INET)
           continue;
-        
-        if (ioctl(sd, SIOCGIFADDR, &ifr[i]) == 0)
+        if (ioctl(sd, SIOCGIFADDR, ifr) < 0)
+          continue;
+
+        // get the ip
+        pAddr = (struct sockaddr_in *) &(ifr->ifr_addr);
+        addr = inet_ntoa(pAddr->sin_addr);
+        #ifdef SOCKET_DEBUG
+          Rprintf("%s : %s\n", ifr->ifr_name, addr);
+        #endif
+
+        // check if the IPv4 is for internal
+        if (strncmp(ifr->ifr_name, "lo", 2)   != 0  &&
+            strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  &&
+            !(ifr->ifr_flags & IFF_LOOPBACK) )
         {
-          addr = inet_ntoa(((struct sockaddr_in *)(&ifr[i].ifr_addr))->sin_addr);
-          if (strncmp(ifr[i].ifr_name, "lo", 2)       != 0  && 
-              strncmp(addr, LOCALHOST, LOCALHOST_LEN) != 0  && 
-              !(ifr[i].ifr_flags & IFF_LOOPBACK) )
-          {
-            SETRET(ip, addr);
-            shutdown(sd, 2);
-            return ip;
-          }
+          SETRET(ip, addr);
+          break;  // only return the fist match, skip the rest
         }
       }
     }
+    // free memory
+    free(ifc.ifc_buf);
   }
-  
-  // found nothing
+  // close socket
   shutdown(sd, 2);
-  error(ERRMSG);
-  
-  return R_NilValue;
+
+  // found nothing
+  if (ip == R_NilValue)
+    error(ERRMSG);
+
+  return ip;
 }
 #endif // end of IF_ADDRS conditional
 
