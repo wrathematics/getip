@@ -77,9 +77,13 @@ static SEXP hostname2ip(SEXP s_)
     
     int status = getaddrinfo(s, NULL, &hints, &res);
     if (status != 0)
-      error("host %s returned %s in getaddrinfo\n", s, gai_strerror(status));
+    {
+      R_END;
+      error("getaddrinfo() failed with error \"%s\"\n      host:  %s\n      index: %i\n", gai_strerror(status), s, i);
+    }
     
     
+    // count number of addrs, then set return vector
     for (p=res; p != NULL; p=p->ai_next)
     {
       if (IS_IPV4(p))
@@ -103,7 +107,6 @@ static SEXP hostname2ip(SEXP s_)
         struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
         void *addr = &(ipv4->sin_addr);
         
-        // convert the IP to a string and print it:
         inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
         SET_STRING_ELT(ipvec, num_addrs, mkChar(ipstr));
         num_addrs++;
