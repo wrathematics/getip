@@ -1,5 +1,5 @@
-/*  Copyright (c) 2015-2016, Drew Schmidt, 
-    Copyright (c) 2016 Wei-Chen
+/*  Copyright (c) 2015-2017, Drew Schmidt, 
+    Copyright (c) 2016-2017 Wei-Chen
     All rights reserved.
     
     Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
   SET_STRING_ELT(ip, 0, mkChar(addr)); \
   UNPROTECT(1);
 
+static SEXP ip_internal();
 
 
 // -----------------------------------------------------------------------------
@@ -107,7 +108,7 @@ static inline SEXP ip_internal()
   return R_NilValue;
 }
 
-// version 5: if we DON'T have getifaddrs()
+// ------------------------------------
 // version 2: if we DON'T have getifaddrs().
 // This should only run on solaris and other bizarre things you've never heard of
 // ------------------------------------
@@ -118,10 +119,9 @@ static inline SEXP ip_internal()
 #include <sys/sockio.h>
 #endif
 
-// TODO
 #define BUFFER_SIZE 2048
 
-SEXP ip_internal()
+static inline SEXP ip_internal()
 {
   SEXP ip = R_NilValue;
   struct ifconf ifc;
