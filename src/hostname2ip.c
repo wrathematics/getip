@@ -62,12 +62,12 @@ static SEXP hostname2ip(SEXP s_)
   SEXP ret;
   const int len = LENGTH(s_);
   struct addrinfo hints, *res, *p;
-  char ipstr[INET_ADDRSTRLEN];
+  char ipstr[INET_ADDRSTRLEN+1];
   
   newRlist(ret, len);
   
   
-  memset(&hints, 0, sizeof hints);
+  memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
   hints.ai_socktype = SOCK_STREAM;
   
@@ -149,7 +149,7 @@ static SEXP hostname2ip(SEXP s_)
     const char *const s = STR(s_, i);
     int num_addrs = 0;
     
-    memset(&addr, 0, sizeof addr);
+    memset(&addr, 0, sizeof(struct in_addr));
     
     // start winsock
     int wserr = WSAStartup(MAKEWORD(2, 2), &wsad);
