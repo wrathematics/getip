@@ -7,6 +7,9 @@
 #' that is the case, allow me to be the first to greet you, person from the
 #' distant future) then \code{NA} is returned for that hostname.
 #' 
+#' The function uses \code{getaddrinfo()} on *NIX systems, and
+#' \code{gethostbyname()} on Windows.
+#' 
 #' @param hosts
 #' A vector of hostnames as strings (or just one).
 #' 
