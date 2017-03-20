@@ -3,4 +3,5 @@ Release 0.1-0:
   * Added native socket to get interfaces.
   * Added external IP lookup.
   * Added hostname-to-ip lookup.
+  * Fixed clang compiler warning in os detection.
 
