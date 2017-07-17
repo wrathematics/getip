@@ -15,6 +15,7 @@ static const R_CallMethodDef CallEntries[] = {
   {"R_validate_ipv4", (DL_FUNC) &R_validate_ipv4, 1},
   {NULL, NULL, 0}
 };
+
 void R_init_getip(DllInfo *dll)
 {
   R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
