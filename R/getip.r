@@ -16,7 +16,6 @@
 #' rendering the function useless.  Make sure you don't accidentally call this
 #' function a billion times in a loop or something.
 #' 
-#' 
 #' @param type
 #' One of \code{"local"} or \code{"internal"} for the local/internal IP, or
 #' one of \code{"external"} or \code{"public"} for the external/public IP.

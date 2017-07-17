@@ -1,5 +1,3 @@
-### url grabber
-
 get_external <- function(url)
 {
   ip <- tryCatch(readLines(url, warn=FALSE), warning=identity)
@@ -13,7 +11,6 @@ get_external <- function(url)
 
 
 ### Services
-
 ip_external_amazonaws <- function()
 {
   url <- "http://checkip.amazonaws.com/"
@@ -57,7 +54,6 @@ ip_external_myexternalip <- function()
 
 
 ### interface
-
 ip_external <- function()
 {
   services <- c("amazonaws", "httpbin", "ipify", "myexternalip")
@@ -66,17 +62,24 @@ ip_external <- function()
   # randomize order
   fns <- sample(fns)
   
-  num_tries <- 2L
+  num_tries <- 1L
+  alldone = FALSE
   for (try in 1:num_tries)
   {
     for (fn in fns)
     {
       ip <- eval(parse(text=fn))
       if (identical(ip, -1L))
-      Sys.sleep(0.2)
+        Sys.sleep(0.2)
       else
-      break
+      {
+        alldone = TRUE
+        break
+      }
     }
+    
+    if (alldone)
+      break
   }
   
   if (identical(ip, -1L))
