@@ -30,4 +30,3 @@ hostname2ip(hosts)
 }
 
 }
-

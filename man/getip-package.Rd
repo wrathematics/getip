@@ -12,4 +12,3 @@ public/external one.  Currently only IPv4 addresses are supported.
 Drew Schmidt
 }
 \keyword{package}
-

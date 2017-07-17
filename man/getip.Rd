@@ -40,4 +40,3 @@ getip("public") # same as getip("external")
 }
 
 }
-
