@@ -44,5 +44,4 @@ To get your public (external) IP address:
 getip::getip("external")
 ```
 
-
 The argument is case-insensitive and operates by partial matching.  So if you're very lazy, you can just type `getip("e")` for the external IP.
