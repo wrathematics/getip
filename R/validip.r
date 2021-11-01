@@ -8,7 +8,7 @@
 #' correctly formatted and could theoretically be a valid IP address.
 #' 
 #' @param ip
-#' A string.
+#' A string or vector of strings.
 #' 
 #' @return
 #' Returns \code{TRUE} if the input is a potentially valid IP address, and
@@ -17,8 +17,7 @@
 #' @examples
 #' library(getip)
 #' 
-#' validip("192.168.1.1")
-#' validip("700.168.1.1")
+#' validip(c("192.168.1.1", "700.168.1.1"))
 #' 
 #' @useDynLib getip R_validate_ipv4
 #' @export
@@ -29,12 +28,9 @@ validip = function(ip)
   #   stop("argument 'v' should be 4 or 6")
   
   if (length(ip) == 0)
-    return(FALSE)
-  else if (length(ip) > 1)
-    return(lapply(ip, validip))
-  
-  if (!is.character(ip) || is.na(ip))
-    return(FALSE)
+    return(logical(0))
+  if (!is.character(ip))
+    return(rep(FALSE, length(ip)))
   else
     .Call(R_validate_ipv4, ip)
 }

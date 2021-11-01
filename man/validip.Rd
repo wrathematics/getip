@@ -7,7 +7,7 @@
 validip(ip)
 }
 \arguments{
-\item{ip}{A string.}
+\item{ip}{A string or vector of strings.}
 }
 \value{
 Returns \code{TRUE} if the input is a potentially valid IP address, and
@@ -24,7 +24,6 @@ correctly formatted and could theoretically be a valid IP address.
 \examples{
 library(getip)
 
-validip("192.168.1.1")
-validip("700.168.1.1")
+validip(c("192.168.1.1", "700.168.1.1"))
 
 }

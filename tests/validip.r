@@ -48,3 +48,9 @@ stopifnot(!validip(test))
 
 test = NA
 stopifnot(!validip(test))
+
+
+# vector test
+test = c("127.0.0.1", NA)
+truth = c(TRUE, FALSE)
+stopifnot(identical(validip(test), truth))

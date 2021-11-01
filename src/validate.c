@@ -1,4 +1,4 @@
-/*  Copyright (c) 2016, Drew Schmidt
+/*  Copyright (c) 2016, 2021, Drew Schmidt
     All rights reserved.
     
     Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 
 #include "include/platform.h"
 
-#define CHARPT(x) ((char*)CHAR(STRING_ELT(x,0)))
+#define CHARPT(x,i) ((char*)CHAR(STRING_ELT(x,i)))
 
 #if OS_WINDOWS
 #include <winsock2.h>
@@ -121,17 +121,22 @@ int inet_pton(int af, const char *src, void *dst)
 #include <netinet/in.h>
 #endif
 
+
 SEXP R_validate_ipv4(SEXP ip_)
 {
   SEXP ret;
-  const char *ip = CHARPT(ip_);
-  int check;
   struct sockaddr_in sa;
   
-  check = (inet_pton(AF_INET, ip, &(sa.sin_addr)) != 0);
+  const R_xlen_t len = LENGTH(ip_);
+  PROTECT(ret = allocVector(LGLSXP, len));
   
-  PROTECT(ret = allocVector(LGLSXP, 1));
-  LOGICAL(ret)[0] = check;
+  for (R_xlen_t i=0; i<len; i++)
+  {
+    const char *ip = CHARPT(ip_, i);
+    int check = (inet_pton(AF_INET, ip, &(sa.sin_addr)) != 0);
+    LOGICAL(ret)[i] = check;
+  }
+  
   UNPROTECT(1);
   return ret;
 }
