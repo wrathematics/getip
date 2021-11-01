@@ -40,7 +40,7 @@ stopifnot(!validip(test))
 test = "255.255.255.256"
 stopifnot(!validip(test))
 
-test = c("255.255.255.255, 127.0.0.1")
+test = "255.255.255.255, 127.0.0.1"
 stopifnot(!validip(test))
 
 test = 127.001
@@ -51,6 +51,10 @@ stopifnot(!validip(test))
 
 
 # vector test
+test = c("255.255.255.255", "127.0.0.1")
+truth = c(TRUE, TRUE)
+stopifnot(identical(validip(test), truth))
+
 test = c("127.0.0.1", NA)
 truth = c(TRUE, FALSE)
 stopifnot(identical(validip(test), truth))
