@@ -3398,7 +3398,7 @@ fi
 
 echo " "
 echo "******************* Results of getip package configure *******************"
-echo "* Arch Report"
+echo "* Socket Report"
 echo "*   >> IFADDRS = ${IFADDRS}"
 echo "*   >> SA_LEN = ${SA_LEN}"
 echo "*   >> SOCKET_LIBS = ${SOCKET_LIBS}"
