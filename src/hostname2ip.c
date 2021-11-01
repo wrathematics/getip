@@ -142,7 +142,7 @@ static SEXP hostname2ip(SEXP s_)
   SEXP ret;
   const R_xlen_t len = LENGTH(s_);
   
-  newRlist(ret, len);
+  PROTECT(ret = allocVector(VECSXP, len));
   
   for (R_xlen_t i=0; i<len; i++)
   {
