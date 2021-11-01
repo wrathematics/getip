@@ -14,21 +14,23 @@ one of \code{"external"} or \code{"public"} for the external/public IP.}
 Returns the requested IP address as a string.
 }
 \description{
-Get your internal/local or external/public IP address.  Currently only IPv4
+Get your internal/local or external/public IP address. Currently only IPv4
 addresses are supported.
 }
 \details{
 The internal/local IP lookup is done in-process, i.e., it does not call
 \code{system()} or the like.
 
-The function returns a lookup from one of several services, including
+For an external address, the function returns a lookup from one of several
+services, including
 Amazon AWS \url{http://checkip.amazonaws.com/}, 
-httpbin \url{http://httpbin.org/ip}, ipify \url{https://www.ipify.org/},
+httpbin \url{http://httpbin.org/ip},
+ipify \url{https://www.ipify.org/},
 and "My External IP address is ..." \url{http://myexternalip.com/}.
-You must be connected to the internet for this to work.  Please note that
+You must be connected to the internet for this to work. Please note that
 pathological use could end up in your getting banned from these services, 
-rendering the function useless.  Make sure you don't accidentally call this
-function a billion times in a loop or something.
+rendering the function useless. So don't call this function a billion times
+in a loop or something.
 }
 \examples{
 library(getip)

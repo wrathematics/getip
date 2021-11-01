@@ -17,6 +17,8 @@
 #' A list of vectors of IP's.  Each IP is stored as a string.
 #' 
 #' @examples
+#' library(getip)
+#' 
 #' \donttest{
 #' hosts = c("www.google.com", "localhost", "www.yahoo.com")
 #' hostname2ip(hosts)
@@ -26,5 +28,8 @@
 #' @export
 hostname2ip = function(hosts)
 {
+  if (!is.character(hosts))
+    stop("argument 'hosts' should be a vector of strings")
+  
   .Call(R_hostname2ip, hosts)
 }

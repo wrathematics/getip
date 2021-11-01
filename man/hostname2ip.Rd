@@ -24,6 +24,8 @@ The function uses \code{getaddrinfo()} on *NIX systems, and
 \code{gethostbyname()} on Windows.
 }
 \examples{
+library(getip)
+
 \donttest{
 hosts = c("www.google.com", "localhost", "www.yahoo.com")
 hostname2ip(hosts)
