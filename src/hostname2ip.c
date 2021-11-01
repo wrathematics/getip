@@ -99,7 +99,7 @@ static SEXP hostname2ip(SEXP s_)
       continue;
     }
     
-    PROTECT(ipvec = allocVector(CHARSXP, num_addrs));
+    PROTECT(ipvec = allocVector(STRSXP, num_addrs));
     num_addrs = 0;
     
     for (p=res; p != NULL; p=p->ai_next)
@@ -190,7 +190,7 @@ static SEXP hostname2ip(SEXP s_)
       continue;
     }
     
-    PROTECT(ipvec = allocVector(CHARSXP, num_addrs));
+    PROTECT(ipvec = allocVector(STRSXP, num_addrs));
     num_addrs = 0;
     
     while (host->h_addr_list[num_addrs])
