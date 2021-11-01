@@ -31,7 +31,8 @@
 
 #include "include/platform.h"
 #include "include/reactor.h"
-#include "include/RNACI.h"
+
+#define STR(x,i) ((char*)CHAR(STRING_ELT(x,i)))
 
 #if OS_NIX
 #include <sys/types.h>
@@ -60,18 +61,17 @@
 static SEXP hostname2ip(SEXP s_)
 {
   SEXP ret;
-  const int len = LENGTH(s_);
+  const R_xlen_t len = LENGTH(s_);
   struct addrinfo hints, *res, *p;
   char ipstr[INET_ADDRSTRLEN+1];
   
-  newRlist(ret, len);
-  
+  PROTECT(ret = allocVector(VECSXP, len));
   
   memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
   hints.ai_socktype = SOCK_STREAM;
   
-  for (int i=0; i<len; i++)
+  for (R_xlen_t i=0; i<len; i++)
   {
     SEXP ipvec;
     const char *const s = STR(s_, i);
@@ -80,7 +80,7 @@ static SEXP hostname2ip(SEXP s_)
     int status = getaddrinfo(s, NULL, &hints, &res);
     if (status != 0)
     {
-      R_END;
+      UNPROTECT(1);
       error("getaddrinfo() failed with error \"%s\"\n      host:  %s\n      index: %i\n", gai_strerror(status), s, i);
     }
     
@@ -99,7 +99,7 @@ static SEXP hostname2ip(SEXP s_)
       continue;
     }
     
-    newRvec(ipvec, num_addrs, "str");
+    PROTECT(ipvec = allocVector(CHARSXP, num_addrs));
     num_addrs = 0;
     
     for (p=res; p != NULL; p=p->ai_next)
@@ -116,12 +116,13 @@ static SEXP hostname2ip(SEXP s_)
     }
     
     SET_VECTOR_ELT(ret, i, ipvec);
+    UNPROTECT(1);
     
     freeaddrinfo(res);
   }
   
   
-  R_END;
+  UNPROTECT(1);
   return ret;
 }
 
@@ -139,11 +140,11 @@ static SEXP hostname2ip(SEXP s_)
   struct hostent *host;
   struct in_addr addr;
   SEXP ret;
-  const int len = LENGTH(s_);
+  const R_xlen_t len = LENGTH(s_);
   
   newRlist(ret, len);
   
-  for (int i=0; i<len; i++)
+  for (R_xlen_t i=0; i<len; i++)
   {
     SEXP ipvec;
     const char *const s = STR(s_, i);
@@ -155,7 +156,7 @@ static SEXP hostname2ip(SEXP s_)
     int wserr = WSAStartup(MAKEWORD(2, 2), &wsad);
     if (wserr != 0)
     {
-      R_END;
+      UNPROTECT(1);
       error("WSAStartup() failed with error: %d\n", wserr);
     }
     
@@ -166,7 +167,7 @@ static SEXP hostname2ip(SEXP s_)
       
       if (errnum != 0)
       {
-        R_END;
+        UNPROTECT(1);
         
         if (errnum == WSAHOST_NOT_FOUND || errnum == WSANO_DATA)
           error("gethostbyname() failed with error \"Name or service not known\"\n      host:  %s\n      index: %i\n", s, i);
@@ -189,7 +190,7 @@ static SEXP hostname2ip(SEXP s_)
       continue;
     }
     
-    newRvec(ipvec, num_addrs, "str");
+    PROTECT(ipvec = allocVector(CHARSXP, num_addrs));
     num_addrs = 0;
     
     while (host->h_addr_list[num_addrs])
@@ -201,10 +202,11 @@ static SEXP hostname2ip(SEXP s_)
     }
     
     SET_VECTOR_ELT(ret, i, ipvec);
+    UNPROTECT(1);
   }
   
   
-  R_END;
+  UNPROTECT(1);
   return ret;
 }
 
