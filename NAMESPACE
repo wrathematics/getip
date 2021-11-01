@@ -2,6 +2,7 @@
 
 export(getip)
 export(hostname2ip)
+export(validip)
 useDynLib(getip,R_hostname2ip)
 useDynLib(getip,R_ip_internal)
 useDynLib(getip,R_validate_ipv4)

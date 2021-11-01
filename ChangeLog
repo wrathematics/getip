@@ -1,4 +1,4 @@
 Release 0.1-0:
-  * Added internal IP lookup.
-  * Added external IP lookup.
-  * Added hostname-to-ip lookup.
+  * Added internal and external IP lookup via getip().
+  * Added hostname-to-ip lookup via hostname2ip().
+  * Added IP address validator via validip().

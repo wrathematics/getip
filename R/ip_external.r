@@ -4,8 +4,8 @@ get_external = function(url)
   
   if (inherits(ip, "simpleWarning"))
     return(-1L)
-  
-  return(ip)
+  else
+    return(ip)
 }
 
 
