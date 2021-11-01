@@ -1,3 +1,6 @@
+Release 0.1-1:
+  * Add report to configure log.
+
 Release 0.1-0:
   * Added internal and external IP lookup via getip().
   * Added hostname-to-ip lookup via hostname2ip().
