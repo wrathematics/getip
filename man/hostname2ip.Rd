@@ -25,7 +25,7 @@ The function uses \code{getaddrinfo()} on *NIX systems, and
 }
 \examples{
 \donttest{
-hosts <- c("www.google.com", "localhost", "www.yahoo.com")
+hosts = c("www.google.com", "localhost", "www.yahoo.com")
 hostname2ip(hosts)
 }
 

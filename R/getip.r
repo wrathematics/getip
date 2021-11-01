@@ -35,14 +35,14 @@
 #' }
 #' 
 #' @export
-getip <- function(type="local")
+getip = function(type="local")
 {
-  type <- match.arg(tolower(type), c("local", "internal", "external", "public"))
+  type = match.arg(tolower(type), c("local", "internal", "external", "public"))
   
   if (type == "internal" || type == "local")
-    ip <- ip_internal()
+    ip = ip_internal()
   else if (type == "external" || type == "public")
-    ip <- ip_external()
+    ip = ip_external()
   
   ip
 }

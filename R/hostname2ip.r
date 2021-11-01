@@ -18,12 +18,13 @@
 #' 
 #' @examples
 #' \donttest{
-#' hosts <- c("www.google.com", "localhost", "www.yahoo.com")
+#' hosts = c("www.google.com", "localhost", "www.yahoo.com")
 #' hostname2ip(hosts)
 #' }
 #' 
+#' @useDynLib getip R_hostname2ip
 #' @export
-hostname2ip <- function(hosts)
+hostname2ip = function(hosts)
 {
   .Call(R_hostname2ip, hosts)
 }
