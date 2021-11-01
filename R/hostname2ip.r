@@ -17,7 +17,7 @@
 #' A list of vectors of IP's.  Each IP is stored as a string.
 #' 
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' hosts <- c("www.google.com", "localhost", "www.yahoo.com")
 #' hostname2ip(hosts)
 #' }

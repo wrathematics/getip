@@ -31,10 +31,12 @@ rendering the function useless.  Make sure you don't accidentally call this
 function a billion times in a loop or something.
 }
 \examples{
-\dontrun{
+library(getip)
+
 # internal/local address
 getip("local") # same as getip("internal")
 
+\donttest{
 # external/public
 getip("public") # same as getip("external")
 }

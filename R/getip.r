@@ -24,10 +24,12 @@
 #' Returns the requested IP address as a string.
 #' 
 #' @examples
-#' \dontrun{
+#' library(getip)
+#' 
 #' # internal/local address
 #' getip("local") # same as getip("internal")
 #' 
+#' \donttest{
 #' # external/public
 #' getip("public") # same as getip("external")
 #' }
