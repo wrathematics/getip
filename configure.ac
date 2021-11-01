@@ -5,7 +5,7 @@
 ## autoconf configure.ac && autoreconf -if
 
 AC_PREREQ([2.69])
-AC_INIT([getip], [0.1-0])
+AC_INIT([getip],[0.1-0])
 
 AC_CHECK_HEADERS([ifaddrs.h],
   [IFADDRS="-DHAS_IFADDRS"],
@@ -39,4 +39,5 @@ fi
 AC_SUBST(IFADDRS)
 AC_SUBST(SOCKET_LIBS)
 AC_SUBST(HAVE_SA_LEN)
-AC_OUTPUT(src/Makevars)
+AC_CONFIG_FILES([src/Makevars])
+AC_OUTPUT
