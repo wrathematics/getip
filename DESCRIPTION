@@ -1,7 +1,7 @@
 Package: getip
 Type: Package
 Title: 'IP' Address 'Lookup'
-Version: 0.1-0
+Version: 0.1-1
 Description: A micro-package for getting your 'IP' address, either the 
     local/internal or the public/external one. Currently only 'IPv4' addresses
     are supported.
