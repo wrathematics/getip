@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 extern SEXP R_hostname2ip(SEXP hosts);
-extern SEXP R_ip_internal();
+extern SEXP R_ip_internal(void);
 extern SEXP R_validate_ipv4(SEXP ip_);
 
 static const R_CallMethodDef CallEntries[] = {

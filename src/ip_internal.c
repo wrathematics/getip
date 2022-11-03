@@ -68,7 +68,7 @@
 #include <ifaddrs.h>
 
 // hope they don't do something weird lol
-static inline SEXP ip_internal()
+static inline SEXP ip_internal(void)
 {
   SEXP ip;
   struct ifaddrs *ifaddrs_p, *start;
@@ -120,7 +120,7 @@ static inline SEXP ip_internal()
 
 #define BUFFER_SIZE 2048
 
-static inline SEXP ip_internal()
+static inline SEXP ip_internal(void)
 {
   SEXP ip = R_NilValue;
   struct ifconf ifc;
@@ -222,7 +222,7 @@ static inline SEXP ip_internal()
   if (ptr == NULL) \
     error("Unable to allocate memory\n");
 
-static inline SEXP ip_internal()
+static inline SEXP ip_internal(void)
 {
   SEXP ip;
   char *addr;
@@ -276,7 +276,7 @@ static inline SEXP ip_internal()
 // -----------------------------------------------------------------------------
 
 #else
-static inline SEXP ip_internal()
+static inline SEXP ip_internal(void)
 {
   error("OS is not detectable as one of Windows or *NIX; platform unsupported");
   return R_NilValue;
@@ -289,7 +289,7 @@ static inline SEXP ip_internal()
 // Wrapper
 // -----------------------------------------------------------------------------
 
-SEXP R_ip_internal()
+SEXP R_ip_internal(void)
 {
   return ip_internal();
 }

@@ -1,3 +1,6 @@
+Release 0.1-2:
+  * C function prototype changes for CRAN.
+
 Release 0.1-1:
   * Add report to configure log.
 
