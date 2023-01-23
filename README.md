@@ -1,6 +1,6 @@
 # getip 
 
-* **Version:** 0.1-2
+* **Version:** 0.1-3
 * **License:** [BSD 2-Clause](https://opensource.org/licenses/BSD-2-Clause)
 * **Project home**: https://github.com/wrathematics/getip
 * **Bug reports**: https://github.com/wrathematics/getip/issues

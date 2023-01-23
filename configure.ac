@@ -7,6 +7,16 @@
 AC_PREREQ([2.69])
 AC_INIT([getip],[0.1-0])
 
+: ${R_HOME=`R RHOME`}
+if test -z "${R_HOME}"; then
+  AC_MSG_ERROR([Unable to determine RHOME])
+fi
+CC=`"${R_HOME}/bin/R" CMD config CC`
+CFLAGS=`"${R_HOME}/bin/R" CMD config CFLAGS`
+CPPFLAGS=`"${R_HOME}/bin/R" CMD config CPPFLAGS`
+
+
+
 AC_CHECK_HEADERS([ifaddrs.h],
   [IFADDRS="-DHAS_IFADDRS"],
   [IFADDRS="-DNO_IFADDRS"]
