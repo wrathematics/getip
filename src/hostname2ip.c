@@ -81,7 +81,7 @@ static SEXP hostname2ip(SEXP s_)
     if (status != 0)
     {
       UNPROTECT(1);
-      error("getaddrinfo() failed with error \"%s\"\n      host:  %s\n      index: %i\n", gai_strerror(status), s, i);
+      error("getaddrinfo() failed with error \"%s\"\n      host:  %s\n      index: %ld\n", gai_strerror(status), s, i);
     }
     
     
