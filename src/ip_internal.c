@@ -244,7 +244,7 @@ static inline SEXP ip_internal(void)
   
   check = GetIpAddrTable(pIPAddrTable, &pdwSize, 0);
   if (check != NO_ERROR)
-    error("GetIpAddrTable returned error number %d\n", check);
+    error("GetIpAddrTable returned error number %lu\n", check);
   
   const int num_entries = pIPAddrTable->dwNumEntries;
   for (int i=0; i<num_entries; i++)

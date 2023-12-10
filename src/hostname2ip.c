@@ -170,7 +170,7 @@ static SEXP hostname2ip(SEXP s_)
         UNPROTECT(1);
         
         if (errnum == WSAHOST_NOT_FOUND || errnum == WSANO_DATA)
-          error("gethostbyname() failed with error \"Name or service not known\"\n      host:  %s\n      index: %i\n", s, i);
+          error("gethostbyname() failed with error \"Name or service not known\"\n      host:  %s\n      index: %lld\n", s, i);
         else
           error("gethostbyname() failed with error: %ld\n", errnum);
       }
